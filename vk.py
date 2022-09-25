@@ -4,7 +4,7 @@ from vktools import Carousel, Element, Text, ButtonColor, OpenLink, Keyboard
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.keyboard import VkKeyboard
 import shutil
-import os
+import os, main
 from sys import platform
 
 def write_msg(user_id, message):
@@ -48,13 +48,17 @@ def sender(id, text, keyboard=keyboard2.add_keyboard(), template=None, att=None)
 def sender_private_msg(id, text, keyboard=keyboard2.add_keyboard(), template=None, att=None):
     vk.method('messages.send', {'user_id' : id, 'message' : text, 'keyboard' : keyboard, 'template' : template, 'random_id' : 0, 'attachment': att})
 
+# поиск символа в списке
+def find_letter(letter, lst):
+    return any(letter in word for word in lst)
+
 # Основной цикл
 while True:
     try:
         print('Бот запущен')
         for event in longpoll.listen():
             if event.type == VkEventType.MESSAGE_NEW:
-                msg = event.text.lower()
+                msg = event.text
                 if event.from_chat:
                     id = event.chat_id
                     print('в чат');
@@ -174,12 +178,20 @@ while True:
                     id = event.user_id
                     
                     
-                    if msg == 'баланс':
+                    if msg.lower() == 'баланс':
                         keyboard = VkKeyboard(inline=True)
                         keyboard.add_button(label = f"Ок")
 
-                        sender_private_msg(id,  ''.join("Да?"), keyboard=keyboard.get_keyboard())
-                    if msg == '/start':
+                        sessions = next(os.walk('sessions/'), (None, None, []))[2]
+
+                        if find_letter(str(id), sessions) == True:
+                            print('Получение баланса')
+                            balance = main.get_balance(str(id))
+                            sender_private_msg(id,  ''.join(balance) + ' руб') #, keyboard=keyboard.get_keyboard()
+                        else:
+                            sender_private_msg(id,  'Ваша сессия не найдена. Используйте команду /start для регистрации')
+                        
+                    if msg.lower() == '/start':
                         print('Старт')
                         # Советую здесь написать код, чтобы главный файл не реагировал на сообщения,
                         # Пока пользователь использует индивидуальную функцию, например, занести его в игнор лист
@@ -191,6 +203,14 @@ while True:
                         time.sleep(60) # Ожидание, чтобы успело получить id
                         print('Время вышло')
                         #os.remove('now id') # Удаляем файл передачи id, так как он больше не нужен, а если его не удалить, то возможно, будет ошибка
+
+                        sessions = next(os.walk('sessions/'), (None, None, []))[2]
+
+                        if find_letter(str(id), sessions) == True:
+                            sender_private_msg(id, 'Успешная регистрация!')
+                        
+
+                        
 
                         
                    

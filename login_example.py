@@ -1,7 +1,7 @@
 # coding=utf-8
 
 ### файл индивидуальноый работы ###
-import vk_api, requests, re, time, json, os, shutil, sys
+import vk_api, requests, re, time, json, os, shutil, sys, main
 import shutil
 import time
 import os
@@ -52,15 +52,15 @@ while True:
         print('Бот запущен')
         for event in longpoll.listen():
             if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-                msg = event.text.lower()
+                msg = event.text
 
                 if event.from_user:
                     new_id = event.user_id # Получаем новый id
                     if new_id == id: # Если нам написал тот же пользователь
                         print('id совпало')
-                        msg = event.text.lower()
+                        msg = event.text
 
-                        if '@bot_talker' in msg:
+                        if '@bot_talker' in msg.lower():
                             msg = msg.partition(' ')[2]
                         
                         if '@' in msg:
@@ -76,8 +76,14 @@ while True:
                             sender_private_msg(id, 'Отлично! Теперь проверим являетесь ли вы человеком \nВведите хеш капчи и токен капчи в формате хеш:токен')
                         
                         if not '@' in msg and len(data_login) != 0:
-                            sender_private_msg(id, 'Вроде всё верно \nВ ближайшее время начнется попытка регистрации')
+                            sender_private_msg(id, 'Вроде всё верно \nРегистрируемся...')
+                            main.register(data_login[0], data_login[1], data_captcha[0], data_captcha[1], id)
+                            os.remove(meFile)
+                            break
 
+
+                        os.remove(meFile) # Удалить себя
+                        break #break всё равно придётся написать, так как если запущен цикл, код не перестаёт работать, пока не прекратиться цикл, даже если файл с кодом удалён
                         
 
     except:
