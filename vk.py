@@ -6,6 +6,7 @@ from vk_api.keyboard import VkKeyboard
 import shutil
 import os, main
 from sys import platform
+from requests.adapters import HTTPAdapter
 
 def write_msg(user_id, message):
     vk.method('messages.send', {'user_id': user_id, 'message': message})
@@ -208,6 +209,9 @@ while True:
 
                         if find_letter(str(id), sessions) == True:
                             sender_private_msg(id, 'Успешная регистрация!')
+
+                    if msg.lower() == '/run':
+                        main.run(str(id))
                         
 
                         

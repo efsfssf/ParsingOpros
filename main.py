@@ -3,6 +3,8 @@ from twocaptcha import TwoCaptcha
 from config import API_KEY
 from bs4 import BeautifulSoup
 import logging, pickle, os, requests
+import json
+import re
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -70,7 +72,7 @@ def get_balance(id_user):
     # Load/Create the session
     session = requests.session()
     session.cookies.update(get_session(id_user))
-    print(session.cookies)
+
     url = 'https://internetopros.ru/private'
     print('Получаем данные сайта')
     response = session.post(url)
@@ -80,4 +82,41 @@ def get_balance(id_user):
         print('Сессия без авторизации')
         return 'Сессия без авторизации. Повторите попытку входа'
     return soup.find("span", {"id": "profile-points__number"}) or "Проблема с сессией"
+
+def get_user_id_in_opros(id_user):
+    # Load/Create the session
+    session = requests.session()
+    session.cookies.update(get_session(id_user))
+    url = 'https://internetopros.ru/Router/FindSurveys'
+    url_ref = 'https://internetopros.ru/private'
+    csrf_token = get_cookie(url)
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Referer': f'{url_ref}',
+        'Cookie': f'csrftoken={csrf_token}',
+        'origin': 'https://internetopros.ru',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1396.0',
+        'accept-encoding': 'gzip, deflate, br',
+        'accept-language': 'ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7',
+        'content-length': '0'
+
+    }
+    response = session.post(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'lxml')
+
+    if 'Вход' in soup.select('h1.private-page__title')[0].text.strip():
+        print('Сессия без авторизации')
+        return 'Сессия без авторизации. Повторите попытку входа'
+
+    data = soup.find('script',  type='text/javascript').text
+    pattern = '[a-z0-9-]{10,50}'
+    result = re.search(pattern, data)
+    print(result.group(0))
+
+    return result.group(0)
+
+def run(id_user):
+    user_id_in_opros = get_user_id_in_opros(str(id_user))
+    url_tesks = 'https://router-client.survstat.ru/client/' + user_id_in_opros
+    
     
