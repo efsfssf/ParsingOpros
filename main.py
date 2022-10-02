@@ -1,10 +1,12 @@
 from asyncio.windows_events import NULL
+from math import e
 from twocaptcha import TwoCaptcha
 from config import API_KEY
 from bs4 import BeautifulSoup
 import logging, pickle, os, requests
 import json
 import re
+from tools import debug
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -13,7 +15,6 @@ solver = TwoCaptcha(API_KEY)
 sitekey = '6Lc3NwoUAAAAALgovRcU2YBbs_EDytbfCEZrK3kh'
 
 url = "https://internetopros.ru/account/login"
-
 
 def get_cookie(LOGIN_URL):
     headers = {
@@ -83,6 +84,22 @@ def get_balance(id_user):
         return 'Сессия без авторизации. Повторите попытку входа'
     return soup.find("span", {"id": "profile-points__number"}) or "Проблема с сессией"
 
+
+def logout(id_user):
+    sessions = next(os.walk('sessions/'), (None, None, []))[2]
+
+    list_sessions_current_user = [file.split("_")[1][:-4] for file in sessions if id_user in file]
+    list_sessions_current_user.insert(0, 'Список ваших аккаунтов: \n')
+    #os.remove(f"sessions/{id_user}_.txt")
+    return list_sessions_current_user
+
+def logout_email(id_user, email):
+    try:
+        os.remove(f"sessions/{id_user}_{email}.pkl")
+        return str('Вышли из аккаунта ' + email)
+    except e:
+        return 'Ошибка выхода из аккаунта \n' + str(e)
+
 def get_user_id_in_opros(id_user):
     # Load/Create the session
     session = requests.session()
@@ -118,5 +135,29 @@ def get_user_id_in_opros(id_user):
 def run(id_user):
     user_id_in_opros = get_user_id_in_opros(str(id_user))
     url_tesks = 'https://router-client.survstat.ru/client/' + user_id_in_opros
+
+    session = requests.session()
+    session.cookies.update(get_session(id_user))
+
+    csrf_token = get_cookie(url)
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': f'csrftoken={csrf_token}',
+        'origin': 'https://internetopros.ru',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1396.0',
+        'accept-encoding': 'gzip, deflate, br',
+        'accept-language': 'ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7',
+        'content-length': '0'
+
+    }
+    response = session.get(url_tesks, headers=headers)
+    soup = BeautifulSoup(response.text, 'lxml')
+    print(url_tesks)
+    debug.write_html(soup)
+    
+    return soup.find("div", {"class": "RichTextContaier_richTextContainer__3q9NW"}).get_text()
+
+if __name__ == '__main__':
+    run(str(309424939))
     
     

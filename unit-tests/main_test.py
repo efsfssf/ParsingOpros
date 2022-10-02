@@ -9,5 +9,12 @@ class Test_TestIncrementDecrement(unittest.TestCase):
 
     def test_balance(self):
         self.assertEqual(any(map(str.isdigit, main.get_balance(str(309424939)))), True)
+
+    
+    def test_run(self):
+        self.assertEqual(main.run(str(309424939)), True)
+    
+    def test_exit(self):
+        self.assertEqual(main.logout(str('test'))[1], 'test@gmail.com')
 if __name__ == '__main__':
     unittest.main()

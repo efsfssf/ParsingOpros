@@ -210,6 +210,21 @@ while True:
                         if find_letter(str(id), sessions) == True:
                             sender_private_msg(id, 'Успешная регистрация!')
 
+                    if msg.lower() == '/stop':
+                        pass
+                    
+                    if msg.lower() == '/exit':
+                        data = list(main.logout(str(id)))
+                        print(data)
+                        sender_private_msg(id,  ''.join(data))
+                        sender_private_msg(id,  'Используйте команду /exit example@email.com что бы выйте из соответствующего аккаунта')
+
+                    if '/exit' in msg.lower() and re.match(r'/exit [\w\.-]+@[\w\.-]+(\.[\w]+)+',msg.lower()) is not None:
+                        email = re.search("([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)", msg.lower())
+                        email = email.group(0)
+                        data = main.logout_email(str(id), email)
+                        sender_private_msg(id,  data)
+
                     if msg.lower() == '/run':
                         main.run(str(id))
                         
